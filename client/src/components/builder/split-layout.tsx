@@ -13,6 +13,7 @@ import {
 import Navigator from "./navigator";
 import Preview from "./preview";
 import ConfigPanel from "./config-panel";
+import FlowMapDialog from "./flow-map-dialog";
 import { useBuilderStore } from "@/store/builder-store";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +23,7 @@ interface SplitLayoutProps {
 
 export default function SplitLayout({ assessment }: SplitLayoutProps) {
   const { toast } = useToast();
+  const [isFlowMapOpen, setIsFlowMapOpen] = useState(false);
   const { 
     currentStepId, 
     setCurrentStepId, 
@@ -147,6 +149,7 @@ export default function SplitLayout({ assessment }: SplitLayoutProps) {
           <Button 
             variant="outline" 
             className="gap-2 min-h-[44px]"
+            onClick={() => setIsFlowMapOpen(true)}
             data-testid="button-flow-map"
           >
             <GitBranch className="w-4 h-4" />
@@ -210,6 +213,14 @@ export default function SplitLayout({ assessment }: SplitLayoutProps) {
         />
 
       </div>
+
+      {/* Flow Map Dialog */}
+      <FlowMapDialog
+        assessment={assessment}
+        isOpen={isFlowMapOpen}
+        onClose={() => setIsFlowMapOpen(false)}
+        currentStepId={currentStepId}
+      />
     </div>
   );
 }

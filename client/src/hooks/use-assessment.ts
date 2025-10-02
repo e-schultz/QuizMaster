@@ -2,7 +2,19 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Assessment, InsertAssessment } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { randomUUID } from "crypto";
+
+// Browser-compatible UUID generator
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 export function useAssessment(existingAssessment?: Assessment) {
   const [currentAssessment, setCurrentAssessment] = useState<Assessment | null>(
@@ -44,7 +56,7 @@ export function useAssessment(existingAssessment?: Assessment) {
       status: "draft",
       groups: [
         {
-          id: randomUUID(),
+          id: generateUUID(),
           title: "Getting Started",
           description: "Basic information collection",
           steps: [
