@@ -1,0 +1,269 @@
+Here’s a drop-in BUILD-PROMPT.md you can place at:
+
+experiments/assessment-flow-rebuild/BUILD-PROMPT.md
+
+⸻
+
+
+---
+created: 2025-10-02 @ 07:10 PM
+type: prompt
+project: experiments/assessment-flow-rebuild
+purpose: Optimized build prompt for a Next.js site with step-grouped flows, split-view builder, conditional traversal, and conditional field display
+model: gpt-5-thinking (compatible: claude-sonnet-4.5)
+---
+
+# Assessment Flow Site – Build Prompt (Next.js)
+
+**Target**: Production-ready Next.js site implementing a **split-view assessment builder** and **runtime form experience** with:
+- Grouped **sections** that act as **steps** in a flow
+- **Split View** builder (preview + config) inspired by **monday.com**/**Sigma-style panels**
+- **Conditional traversal** between steps (branching)
+- **Conditional display** within forms (field/show-hide logic)
+- Accessibility-first, healthcare-friendly defaults
+
+---
+
+## Mission
+
+Build a Next.js App Router site that lets users **design** and **run** complex assessments. Editors arrange steps into **section groups** (wizard-like), define **conditions** that branch to other steps/sections, and configure **field-level visibility** rules. End-users complete the assessment in a clean, accessible UI.
+
+---
+
+## Core Capabilities
+
+1. **Split-View Builder (Editor)**
+   - Left: **Navigator** (Section Groups → Steps) with drag-to-reorder and “+ add step/group”.
+   - Center: **Live Preview** of current step (form).
+   - Right: **Config Panel**: step settings, fields, validation, **conditional rules** (both field and traversal).
+   - Top bar: title, status (draft/published), **dirty indicator**, Save / Publish.
+   - Keyboard: **Cmd/Ctrl+S** save, **Cmd/Ctrl+K** quick action, **↑/↓** navigate list, **Enter** edit.
+
+2. **Section Groups & Steps**
+   - Groups encapsulate related steps (e.g., “Intake”, “Vitals”, “Screening”).
+   - Steps have **form schemas** (Zod), field configs, help text, and **visibility logic**.
+   - Per-step **onComplete** actions: compute derived values, evaluate traversal condition(s).
+
+3. **Conditional Traversal**
+   - Rule sets evaluate answers/context to pick **next step** or **jump to group**.
+   - Support **fall-through** (default) when no conditions match.
+   - Provide a visual **Flow Map** (read-only graph) to sanity-check reachability.
+
+4. **Conditional Field Display**
+   - Field-level `show/hide` rules using declarative expressions tied to current answers.
+   - **RHF** `watch()` + `shouldUnregister: true` so hidden fields are not submitted.
+
+5. **Reference Patterns**
+   - **monday.com**: split layout, keyboardable list, sticky headers, subtle “unsaved” affordances.
+   - **Sigma-class panels**: dense right-side configurator with collapsible sections, inline validation.
+   - **Healthcare**: plain language, progressive disclosure, 44px targets, high-contrast defaults.
+
+---
+
+## Technology (Locked)
+
+```json
+{
+  "framework": "Next.js 15+ (App Router, RSC where possible)",
+  "ui": "TailwindCSS + shadcn/ui",
+  "forms": "react-hook-form",
+  "validation": "zod",
+  "state": "zustand (global flags/user prefs), local component state for forms",
+  "routing": "next/navigation",
+  "persistence": "file-based JSON in /public/assessments during experiment",
+  "testing": "vitest + @testing-library/react + playwright",
+  "types": "TypeScript strict",
+  "a11y": "axe-core CI, WCAG AA/AAA targets"
+}
+
+
+⸻
+
+Data Model (Minimum Viable)
+
+// assessments/<id>.json
+export type Assessment = {
+  id: string
+  title: string
+  version: number
+  status: 'draft' | 'published'
+  groups: Group[]
+  meta: { createdAt: string; updatedAt: string; createdBy?: string }
+}
+
+export type Group = {
+  id: string
+  title: string
+  description?: string
+  steps: StepRef[]           // ordering only; steps live in `steps` map
+}
+
+export type StepRef = { id: string }
+
+export type StepMap = Record<string, Step>
+
+export type Step = {
+  id: string
+  key: string                 // machine-safe
+  title: string
+  description?: string
+  fields: Field[]             // RHF-driven, zod schema derived
+  traversal?: TraversalRule[] // next-step logic (ordered)
+  fallbackNext?: { type: 'step' | 'group' | 'end'; id?: string }
+}
+
+export type Field = {
+  name: string
+  label: string
+  type: 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio' | 'date' | 'bmi'
+  required?: boolean
+  options?: { label: string; value: string }[]
+  helpText?: string
+  visibility?: VisibilityExpr // show/hide
+  validate?: ZodSpecRef       // reference into step-level zod schema parts
+}
+
+export type VisibilityExpr = {
+  // simple JSON DSL, e.g., { all: [{eq: ['smoker', true]}, {gt: ['age', 18]}] }
+  any?: Cond[]; all?: Cond[]; not?: VisibilityExpr
+}
+export type Cond =
+  | { eq: [fieldName: string, value: unknown] }
+  | { ne: [fieldName: string, value: unknown] }
+  | { gt: [fieldName: string, num: number] }
+  | { gte: [fieldName: string, num: number] }
+  | { lt: [fieldName: string, num: number] }
+  | { lte: [fieldName: string, num: number] }
+  | { in: [fieldName: string, values: unknown[]] }
+  | { truthy: [fieldName: string] }
+  | { falsy: [fieldName: string] }
+
+export type TraversalRule = {
+  when: VisibilityExpr         // evaluated against accumulated answers/context
+  go: { type: 'step' | 'group' | 'end'; id?: string }
+}
+
+export type ZodSpecRef = { path: string } // e.g. "steps.vitals.fields.weight"
+
+Notes:
+	•	Keep answers in a session object { stepKey: { fieldName: value } }.
+	•	Traversal evaluates using merged answers up to the current step.
+
+⸻
+
+UX Requirements
+	•	Split Layout (3 panes):
+	•	Navigator (left): groups/steps tree, drag-to-reorder, badges for validation errors.
+	•	Preview (center): live form with RHF; mobiles: toggle between tree/config.
+	•	Config (right): tabs: Step, Fields, Conditions, Validation.
+	•	Unsaved Work
+	•	Zustand isDirty flag; asterisk in title; beforeunload + in-app route guard.
+	•	Empty States
+	•	Clear CTAs: “Create first group”, “Add step to group”.
+	•	Validation Surfacing
+	•	Inline errors, summary banner, “Flow Map” unreachable detection.
+	•	Accessibility
+	•	Full keyboard support; focus management; ARIA labels; non-color indicators.
+
+⸻
+
+Implementation Phases
+
+Phase 1 — Skeleton & Storage
+	•	App shell (App Router), layout with split panes (responsive).
+	•	File-based repo for assessments (list/create/duplicate/import/export).
+	•	Navigator → select step → Preview renders; Config panel mounts RHF editor.
+	•	Dirty-state plumbing; save/load to JSON.
+
+DoD: Create group, add step, edit fields, save, reload—works; a11y lint clean.
+
+Phase 2 — Conditional Display (Fields)
+	•	Implement VisibilityExpr evaluator.
+	•	RHF watch() + shouldUnregister: true; hidden fields unregistered.
+	•	Config UI for building expressions (simple builders + advanced JSON editor).
+
+DoD: Fields hide/show instantly; submission excludes hidden values; tests cover DSL.
+
+Phase 3 — Conditional Traversal (Flow)
+	•	Add ordered TraversalRule[] per step; evaluate on Continue.
+	•	Fallback route; “End” sentinel.
+	•	Flow Map (read-only) to visualize reachability; detector for orphaned steps.
+
+DoD: Branching paths verified; unreachable warnings shown; back/forward works.
+
+Phase 4 — Builder Fit & Finish (monday.com / Sigma parity)
+	•	List keyboarding; inline renaming; drag handles with drop affordances.
+	•	Sticky headers; subtle shadows; optimistic UI; toast feedback.
+	•	Quick actions (Cmd/Ctrl+K): “Add step”, “Add condition”, “Jump to…”.
+
+DoD: Fluid editing; no jank; lighthouse > 90.
+
+Phase 5 — Runtime Player
+	•	Read published assessment JSON and render the multi-step experience.
+	•	Persist session answers (in-memory + localStorage), resume support.
+	•	Summary & export answers as JSON.
+
+DoD: A non-editor user can complete an assessment end-to-end with branching.
+
+⸻
+
+Key Engineering Patterns
+	•	State boundaries
+	•	Global (Zustand): isDirty, UI prefs, theme.
+	•	RHF for step config and runtime answers.
+	•	Keep builder’s preview isolated; don’t over-globalize.
+	•	RHF Best Practices
+	•	useWatch() per field; Controller for complex inputs.
+	•	shouldUnregister: true for hidden fields.
+	•	Performance
+	•	Virtualize long step/field lists.
+	•	Memoize panes; lazy-load Config tabs.
+	•	Testing
+	•	Unit: visibility/condition evaluator.
+	•	Integration: builder edit → save → reload parity.
+	•	E2E: author → publish → run; traversal correctness.
+
+⸻
+
+Accessibility & Content
+	•	Font size >= 18px body; controls ≥ 44px; contrast ≥ 7:1 where feasible.
+	•	Plain-language helper text; tooltip expansion for jargon.
+	•	Avoid timeouts; always include “Prefer not to answer” where sensitive.
+
+⸻
+
+Commit Protocol
+
+Short, factual commits:
+
+feat(builder): split layout with navigator/preview/config
+feat(rules): add visibility DSL + evaluator with tests
+feat(traversal): ordered rules + fallback + flow-map
+chore(a11y): keyboard focus traps + aria labels
+
+
+⸻
+
+Deliverables
+	•	Site: Next.js app with editor and runtime player.
+	•	Docs: README (run, build, test), ARCHITECTURE.md (state boundaries, DSL), EVALUATOR.md (visibility/traversal).
+	•	Tests: unit, integration, E2E (Playwright).
+	•	Samples: 2–3 JSON assessments demonstrating groups, branching, and conditional fields.
+
+⸻
+
+Out of Scope (for this experiment)
+	•	Auth/multiuser
+	•	Server DB (use JSON)
+	•	Real-time collaboration
+	•	External integrations (export hooks may be stubbed)
+
+⸻
+
+Execution Notes (for the model)
+	•	Prefer deterministic, auditable steps over cleverness.
+	•	Produce typed helpers for DSL parsing and evaluation.
+	•	Fail fast: block publish when reachability or validation fails.
+	•	Keep it fucking tidy: strict TS, ESLint clean, no stray any.
+
+---
