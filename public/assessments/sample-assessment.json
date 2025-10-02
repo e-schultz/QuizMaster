@@ -1,0 +1,332 @@
+{
+  "id": "sample-patient-intake",
+  "title": "Patient Intake Assessment",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "intake-group",
+      "title": "Intake",
+      "description": "Basic patient information collection",
+      "steps": [
+        { "id": "personal-info" },
+        { "id": "contact-details" },
+        { "id": "insurance-info" }
+      ]
+    },
+    {
+      "id": "vitals-group",
+      "title": "Vitals & Measurements",
+      "description": "Physical measurements and vital signs",
+      "steps": [
+        { "id": "height-weight" },
+        { "id": "blood-pressure" }
+      ]
+    },
+    {
+      "id": "screening-group",
+      "title": "Screening Questions",
+      "description": "Health screening and risk assessment",
+      "steps": [
+        { "id": "smoking-history" },
+        { "id": "medical-history" },
+        { "id": "medications" },
+        { "id": "allergies" }
+      ]
+    }
+  ],
+  "steps": {
+    "personal-info": {
+      "id": "personal-info",
+      "key": "personal_info",
+      "title": "Personal Information",
+      "description": "Please provide your basic personal information. All fields marked with * are required.",
+      "fields": [
+        {
+          "name": "first_name",
+          "label": "First Name",
+          "type": "text",
+          "required": true,
+          "helpText": "Enter your legal first name as it appears on official documents."
+        },
+        {
+          "name": "last_name",
+          "label": "Last Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "gender",
+          "label": "Gender",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "label": "Male", "value": "male" },
+            { "label": "Female", "value": "female" },
+            { "label": "Non-binary", "value": "non_binary" },
+            { "label": "Prefer not to answer", "value": "prefer_not_to_answer" }
+          ]
+        },
+        {
+          "name": "marital_status",
+          "label": "Marital Status",
+          "type": "radio",
+          "required": true,
+          "options": [
+            { "label": "Single", "value": "single" },
+            { "label": "Married", "value": "married" },
+            { "label": "Divorced", "value": "divorced" },
+            { "label": "Widowed", "value": "widowed" },
+            { "label": "Prefer not to answer", "value": "prefer_not_to_answer" }
+          ]
+        },
+        {
+          "name": "smoker",
+          "label": "Do you smoke?",
+          "type": "checkbox",
+          "helpText": "Check if you currently use tobacco products"
+        },
+        {
+          "name": "smoking_years",
+          "label": "Years smoking",
+          "type": "number",
+          "required": true,
+          "helpText": "Number of years you have been smoking",
+          "visibility": {
+            "all": [
+              { "eq": ["smoker", true] }
+            ]
+          }
+        }
+      ],
+      "traversal": [
+        {
+          "when": {
+            "all": [
+              { "eq": ["smoker", true] }
+            ]
+          },
+          "go": {
+            "type": "step",
+            "id": "smoking-history"
+          }
+        }
+      ],
+      "fallbackNext": {
+        "type": "step",
+        "id": "contact-details"
+      }
+    },
+    "contact-details": {
+      "id": "contact-details",
+      "key": "contact_details",
+      "title": "Contact Details",
+      "description": "How can we reach you for appointments and updates?",
+      "fields": [
+        {
+          "name": "phone",
+          "label": "Phone Number",
+          "type": "text",
+          "required": true,
+          "helpText": "Primary phone number for appointment reminders"
+        },
+        {
+          "name": "email",
+          "label": "Email Address",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "address",
+          "label": "Home Address",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "name": "emergency_contact",
+          "label": "Emergency Contact Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "emergency_phone",
+          "label": "Emergency Contact Phone",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    "insurance-info": {
+      "id": "insurance-info",
+      "key": "insurance_info",
+      "title": "Insurance Information",
+      "description": "Please provide your insurance details for billing purposes.",
+      "fields": [
+        {
+          "name": "insurance_provider",
+          "label": "Insurance Provider",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "policy_number",
+          "label": "Policy Number",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "group_number",
+          "label": "Group Number",
+          "type": "text"
+        }
+      ]
+    },
+    "height-weight": {
+      "id": "height-weight",
+      "key": "height_weight",
+      "title": "Height & Weight",
+      "description": "We'll use this information to calculate your BMI automatically.",
+      "fields": [
+        {
+          "name": "measurements",
+          "label": "Height and Weight",
+          "type": "bmi"
+        }
+      ]
+    },
+    "blood-pressure": {
+      "id": "blood-pressure",
+      "key": "blood_pressure",
+      "title": "Blood Pressure",
+      "description": "Please provide your most recent blood pressure reading if available.",
+      "fields": [
+        {
+          "name": "systolic",
+          "label": "Systolic (top number)",
+          "type": "number",
+          "helpText": "Normal range is typically 90-120"
+        },
+        {
+          "name": "diastolic",
+          "label": "Diastolic (bottom number)",
+          "type": "number",
+          "helpText": "Normal range is typically 60-80"
+        },
+        {
+          "name": "measurement_date",
+          "label": "When was this measured?",
+          "type": "date"
+        }
+      ]
+    },
+    "smoking-history": {
+      "id": "smoking-history",
+      "key": "smoking_history",
+      "title": "Smoking History",
+      "description": "Additional questions about your smoking habits.",
+      "fields": [
+        {
+          "name": "cigarettes_per_day",
+          "label": "Cigarettes per day",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "quit_attempts",
+          "label": "Have you tried to quit?",
+          "type": "checkbox"
+        },
+        {
+          "name": "quit_methods",
+          "label": "What methods have you tried?",
+          "type": "textarea",
+          "visibility": {
+            "all": [
+              { "eq": ["quit_attempts", true] }
+            ]
+          }
+        }
+      ]
+    },
+    "medical-history": {
+      "id": "medical-history",
+      "key": "medical_history",
+      "title": "Medical History",
+      "description": "Please tell us about your medical background.",
+      "fields": [
+        {
+          "name": "chronic_conditions",
+          "label": "Do you have any chronic medical conditions?",
+          "type": "textarea",
+          "helpText": "Examples: diabetes, high blood pressure, heart disease, etc."
+        },
+        {
+          "name": "surgeries",
+          "label": "Previous surgeries or hospitalizations",
+          "type": "textarea"
+        },
+        {
+          "name": "family_history",
+          "label": "Family medical history",
+          "type": "textarea",
+          "helpText": "Important medical conditions in immediate family members"
+        }
+      ]
+    },
+    "medications": {
+      "id": "medications",
+      "key": "medications",
+      "title": "Current Medications",
+      "description": "List all medications, supplements, and vitamins you currently take.",
+      "fields": [
+        {
+          "name": "prescription_meds",
+          "label": "Prescription medications",
+          "type": "textarea",
+          "helpText": "Include name, dosage, and frequency"
+        },
+        {
+          "name": "otc_supplements",
+          "label": "Over-the-counter medications and supplements",
+          "type": "textarea"
+        }
+      ]
+    },
+    "allergies": {
+      "id": "allergies",
+      "key": "allergies",
+      "title": "Allergies",
+      "description": "Important information about any allergies or adverse reactions.",
+      "fields": [
+        {
+          "name": "drug_allergies",
+          "label": "Drug allergies",
+          "type": "textarea",
+          "helpText": "Include the medication name and type of reaction"
+        },
+        {
+          "name": "food_allergies",
+          "label": "Food allergies",
+          "type": "textarea"
+        },
+        {
+          "name": "environmental_allergies",
+          "label": "Environmental allergies",
+          "type": "textarea",
+          "helpText": "Examples: pollen, latex, etc."
+        }
+      ]
+    }
+  },
+  "meta": {
+    "createdAt": "2024-01-15T10:00:00.000Z",
+    "updatedAt": "2024-01-20T14:30:00.000Z",
+    "createdBy": "system"
+  }
+}
