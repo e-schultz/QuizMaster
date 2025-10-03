@@ -10,7 +10,7 @@ import {
   ClipboardList,
   User
 } from "lucide-react";
-import Navigator from "./navigator";
+import FlowCanvas from "./flow-canvas";
 import Preview from "./preview";
 import ConfigPanel from "./config-panel";
 import FlowMapDialog from "./flow-map-dialog";
@@ -24,6 +24,7 @@ interface SplitLayoutProps {
 export default function SplitLayout({ assessment }: SplitLayoutProps) {
   const { toast } = useToast();
   const [isFlowMapOpen, setIsFlowMapOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { 
     currentStepId, 
     setCurrentStepId, 
@@ -145,15 +146,15 @@ export default function SplitLayout({ assessment }: SplitLayoutProps) {
             <kbd className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs font-mono">⌘K</kbd>
           </Button>
 
-          {/* View Flow Map */}
+          {/* Toggle Preview */}
           <Button 
             variant="outline" 
             className="gap-2 min-h-[44px]"
-            onClick={() => setIsFlowMapOpen(true)}
-            data-testid="button-flow-map"
+            onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+            data-testid="button-toggle-preview"
           >
-            <GitBranch className="w-4 h-4" />
-            <span className="hidden sm:inline">Flow Map</span>
+            <ClipboardList className="w-4 h-4" />
+            <span className="hidden sm:inline">{isPreviewOpen ? 'Hide' : 'Show'} Preview</span>
           </Button>
 
           {/* Save */}
@@ -190,21 +191,36 @@ export default function SplitLayout({ assessment }: SplitLayoutProps) {
         </div>
       </header>
 
-      {/* Split View Layout */}
+      {/* Canvas + Config Layout */}
       <div className="flex flex-1 overflow-hidden">
         
-        {/* LEFT PANEL: Navigator */}
-        <Navigator 
-          assessment={assessment} 
-          currentStepId={currentStepId}
-          onStepSelect={setCurrentStepId}
-        />
-
-        {/* CENTER PANEL: Live Preview */}
-        <Preview 
-          assessment={assessment}
-          currentStepId={currentStepId}
-        />
+        {/* MAIN CANVAS: Flow Canvas */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <FlowCanvas assessment={assessment} />
+          
+          {/* BOTTOM PANEL: Preview (Toggleable) */}
+          {isPreviewOpen && (
+            <div className="h-80 border-t border-border bg-card">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                <h3 className="text-sm font-semibold text-foreground">Live Preview</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setIsPreviewOpen(false)}
+                  data-testid="button-close-preview"
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="h-[calc(100%-41px)] overflow-auto">
+                <Preview 
+                  assessment={assessment}
+                  currentStepId={currentStepId}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* RIGHT PANEL: Config Panel */}
         <ConfigPanel 
