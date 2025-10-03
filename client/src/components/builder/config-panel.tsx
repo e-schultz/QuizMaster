@@ -21,6 +21,7 @@ import {
   Settings
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useBuilderStore } from "@/store/builder-store";
 
 interface ConfigPanelProps {
   assessment: Assessment;
@@ -29,12 +30,69 @@ interface ConfigPanelProps {
 
 export default function ConfigPanel({ assessment, currentStepId }: ConfigPanelProps) {
   const [activeTab, setActiveTab] = useState("settings");
+  const { selectedEdge } = useBuilderStore();
 
+  // Show edge config if edge is selected
+  if (selectedEdge) {
+    return (
+      <aside className="w-96 bg-card border-l border-border flex flex-col overflow-hidden" data-testid="config-panel-edge">
+        <div className="p-4 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-1">
+            Edge Configuration
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Configure traversal rule
+          </p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wide">Edge Type</Label>
+              <Input 
+                value={selectedEdge.data?.isFallback ? 'Fallback/Default' : selectedEdge.data?.isNatural ? 'Natural Flow' : 'Conditional'}
+                className="mt-1.5 bg-muted"
+                readOnly
+              />
+            </div>
+            
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wide">From Step</Label>
+              <Input 
+                value={selectedEdge.source}
+                className="mt-1.5 bg-muted font-mono"
+                readOnly
+              />
+            </div>
+            
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wide">To Step</Label>
+              <Input 
+                value={selectedEdge.target}
+                className="mt-1.5 bg-muted font-mono"
+                readOnly
+              />
+            </div>
+            
+            {!selectedEdge.data?.isNatural && (
+              <div className="pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Edit traversal rules in the step's "Rules" tab
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // Show empty state if nothing selected
   if (!currentStepId) {
     return (
       <aside className="w-96 bg-card border-l border-border flex items-center justify-center">
         <div className="text-center text-muted-foreground p-8">
-          <p>Select a step to configure</p>
+          <p>Select a step or edge to configure</p>
         </div>
       </aside>
     );
