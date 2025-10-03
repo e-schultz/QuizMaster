@@ -25,14 +25,21 @@ Preferred communication style: Simple, everyday language.
 - **Inter** font family for general text, **JetBrains Mono** for monospace
 
 **State Management Strategy**
-- **Zustand** for builder-specific client state (current step, dirty flags, save operations)
+- **Zustand** for builder-specific client state:
+  - `currentStepId`: Selected step node in canvas
+  - `selectedEdge`: Selected edge in canvas
+  - `isDirty`: Unsaved changes flag
+  - Save/publish operations
 - React Query for server state synchronization
 - React Hook Form with Zod validation for form state
 - Local component state for UI interactions
 
 **Key UI Patterns**
-- Split-view layout: Navigator (left) + Preview (center) + Config Panel (right)
-- Flow visualization using **@xyflow/react** for graph-based traversal mapping
+- **Canvas-first builder**: Visual flow canvas (center) + Contextual config panel (right) + Toggleable preview (bottom)
+  - Main canvas uses **@xyflow/react** to display steps as nodes and traversal rules as edges
+  - Click nodes to configure steps (Settings/Fields/Rules tabs)
+  - Click edges to view edge configuration (type, source, target)
+  - Reachability validation with visual warnings for unreachable steps
 - Conditional rendering based on visibility rules evaluated at runtime
 - Form field components that adapt based on field type (text, number, select, radio, checkbox, date, BMI calculator)
 
@@ -85,12 +92,20 @@ Preferred communication style: Simple, everyday language.
 - **Operators supported**: `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `in`
 - Evaluation functions in `visibility-evaluator.ts` and `traversal-evaluator.ts`
 
-**Assessment Builder**
-- Three-panel split layout with keyboard shortcuts (Cmd/Ctrl+S to save)
-- Drag-and-drop step reordering (intended but may not be fully implemented)
-- Live preview of form as it's being built
-- Flow map visualization for validating reachability and detecting dead ends
+**Assessment Builder (Canvas-First Design)**
+- Visual flow canvas as primary interface (monday.com/Zapier-style)
+  - Steps displayed as nodes with field count badges
+  - Traversal rules shown as animated edges with condition labels
+  - Unreachable steps highlighted in red with validation warnings
+  - Click to select nodes (steps) or edges (traversal rules)
+- Contextual configuration panel
+  - Shows step configuration when node selected (Settings/Fields/Rules tabs)
+  - Shows edge configuration when edge selected (type, source, target)
+  - Empty state when nothing selected
+- Toggleable preview panel at bottom (Show/Hide Preview button)
+- Keyboard shortcuts (Cmd/Ctrl+S to save, Cmd/Ctrl+K for quick actions)
 - Field editor with support for 8+ field types including custom BMI calculator
+- Drag-to-connect placeholder (onConnect handler exists, full implementation pending)
 
 **Runtime Player**
 - Progressive form completion with step-by-step navigation
