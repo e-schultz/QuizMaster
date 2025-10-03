@@ -250,6 +250,7 @@ export default function FlowCanvas({ assessment }: FlowCanvasProps) {
 
   // Handle edge selection
   const handleEdgeClick = useCallback((_: any, edge: Edge) => {
+    console.log('Edge clicked:', edge);
     setSelectedEdge(edge);
     setCurrentStepId(null);
   }, [setCurrentStepId, setSelectedEdge]);
@@ -315,6 +316,8 @@ export default function FlowCanvas({ assessment }: FlowCanvasProps) {
           defaultEdgeOptions={{
             type: 'default',
           }}
+          elementsSelectable={true}
+          selectNodesOnDrag={false}
         >
           <Background color="hsl(var(--muted-foreground))" gap={16} />
           <Controls />
