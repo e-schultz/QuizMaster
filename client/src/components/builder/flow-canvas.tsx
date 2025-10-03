@@ -42,10 +42,6 @@ interface FlowCanvasProps {
   assessment: Assessment;
 }
 
-const nodeTypes = {
-  step: StepNode,
-};
-
 function getFieldIcon(fieldType: string) {
   const iconClass = "w-3 h-3";
   switch (fieldType) {
@@ -171,6 +167,9 @@ function StepNode({ data, selected }: { data: any; selected: boolean }) {
 
 export default function FlowCanvas({ assessment }: FlowCanvasProps) {
   const { currentStepId, setCurrentStepId, setSelectedEdge } = useBuilderStore();
+  
+  // Memoize node types to prevent React Flow warnings
+  const nodeTypes = useMemo(() => ({ step: StepNode }), []);
   
   // Validate reachability
   const { reachableSteps, unreachableSteps } = useMemo(
