@@ -1,0 +1,161 @@
+r approved Claude's plan:
+  ⎿  UX Redesign: Visual Flow Builder with XYFlow/React Flow
+
+     Problem Analysis
+
+     Current Implementation Issues:
+     1. Hidden Relationships: Groups contain steps, but the flow/sequence isn't visible
+     2. Abstract Navigation: Nested list doesn't show conditional branching or traversal paths
+     3. Cognitive Load: User must imagine how the assessment flows - no visual representation
+     4. Split Attention: Three separate panes (Navigator, Preview, Config) fragment the mental model
+     5. No Flow Visualization: Conditional logic (traversal rules) invisible in current UI
+
+     Industry Best Practices (Research Findings)
+
+     Visual Workflow Builders:
+     - monday.com: Canvas-based with drag-drop blocks, configuration panel on right, visual connections between steps
+     - Zapier: Node-based triggers/actions, clear visual flow from left to right, instant feedback
+     - React Flow: Node-based UI library - nodes + edges, mini-map, drag-to-connect, auto-layout
+
+     Form Builders:
+     - Typeform: "One question per page" with clear linear flow, branching logic shown visually
+     - Google Forms: Section-based with conditional logic, preview mode alongside builder
+
+     Proposed Solution: Hybrid Approach
+
+     Primary Interface: Visual Flow Canvas (React Flow)
+     - Nodes represent Steps (not groups)
+     - Edges show traversal rules (conditional navigation)
+     - Drag-to-connect for creating traversal paths
+     - Auto-layout (ELK.js) for clean arrangement
+     - Mini-map for overview
+     - Zoom/pan for large assessments
+
+     Secondary Organization: Swimlanes/Groups
+     - Visual grouping via background rectangles or color coding
+     - Groups as organizational concept, not navigation blocker
+     - Steps can be dragged between groups
+
+     Right Panel: Context-Sensitive Config
+     - Click node → configure step (fields, logic)
+     - Click edge → configure traversal rule
+     - Collapsible for full-canvas view
+
+     Bottom Panel: Live Preview
+     - Toggle to see runtime form
+     - Updates as you configure
+     - Test conditional logic in real-time
+
+     Implementation Plan
+
+     Phase 1: Install React Flow + Basic Nodes
+
+     1. Add Dependencies
+     npm install reactflow @xyflow/react
+     2. Create Canvas Component
+       - Replace Navigator with FlowCanvas
+       - Nodes = Steps (with fields count badge)
+       - Initial layout = simple vertical stack
+       - Click to select → shows config panel
+     3. Maintain Current Features
+       - Keep Preview and Config panels
+       - Add/edit fields still works
+       - State management stays Zustand
+
+     Phase 2: Visual Traversal
+
+     1. Edge Creation
+       - Drag from node handle → creates traversal rule
+       - Edge label shows condition (e.g., "if BMI > 30")
+       - Click edge → configure condition in panel
+     2. Node Colors
+       - Default: blue
+       - Conditional: amber (has traversal rules)
+       - End: green
+       - Error/validation: red
+     3. Auto-Layout
+       - Use ELK.js or Dagre for automatic positioning
+       - Left-to-right flow (start → end)
+       - Parallel paths shown side-by-side
+
+     Phase 3: Enhanced UX
+
+     1. Group Visualization
+       - Background rectangles for groups
+       - Collapse/expand groups
+       - Drag nodes between groups
+     2. Mini-map
+       - Small overview in corner
+       - Click to navigate
+       - Viewport indicator
+     3. Quick Actions
+       - Right-click node → Add field, Duplicate, Delete
+       - Cmd+K → Quick search/add
+       - Undo/redo support
+     4. Preview Integration
+       - Button to toggle preview panel
+       - Or: inline preview on hover
+       - Test mode: start from any node
+
+     Migration Strategy
+
+     Keep Existing Work:
+     - Types system unchanged (Assessment, Step, Field, TraversalRule)
+     - Evaluator logic unchanged
+     - Storage layer unchanged
+     - Zustand store mostly unchanged
+
+     New Components:
+     - FlowCanvas.tsx - React Flow wrapper
+     - StepNode.tsx - Custom node component
+     - TraversalEdge.tsx - Custom edge component
+     - NodeToolbar.tsx - Quick actions on node hover
+
+     Data Transformation:
+     - Convert Groups/Steps → React Flow nodes (x/y positions)
+     - Convert TraversalRules → React Flow edges (source/target)
+     - Auto-layout on first load
+     - Save positions in assessment JSON
+
+     Benefits
+
+     1. Visual Clarity: See the entire flow at a glance
+     2. Conditional Logic Visible: Branching paths shown as edges
+     3. Mental Model Match: Canvas matches how assessments actually work
+     4. Less Cognitive Load: One canvas vs. three disconnected panes
+     5. Industry Standard: Users familiar with Zapier/monday.com will understand immediately
+     6. Scalable: Works for simple linear flows and complex branching
+
+     Example Use Case
+
+     Before (Current):
+     Navigator:
+       - Group: Health Screening
+         - Step: Basic Info
+         - Step: BMI Calculation
+         - Step: Risk Assessment
+       - Group: Follow-up
+         - Step: High Risk Path
+         - Step: Low Risk Path
+     User can't see: BMI > 30 → High Risk, else → Low Risk
+
+     After (Visual Flow):
+     [Basic Info] → [BMI Calc] ─┬─ if BMI > 30 ─→ [High Risk]
+                                └─ else ────────→ [Low Risk]
+     Immediately visible: conditional branching, two possible paths
+
+     Timeline Estimate
+
+     - Phase 1 (Canvas + Basic Nodes): 2-3 hours
+     - Phase 2 (Visual Traversal): 2-3 hours  
+     - Phase 3 (Polish + UX): 2-3 hours
+     - Total: 6-9 hours for complete visual flow builder
+
+     With verification loop: Add 30-60min per phase for Playwright testing.
+
+     Risk Mitigation
+
+     - Keep old Navigator code (feature flag toggle)
+     - Gradual migration: Canvas alongside existing UI first
+     - User testing at Phase 1 before continuing
+     - Document breaking changes clearly
