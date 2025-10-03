@@ -11,6 +11,7 @@ import {
   Edge,
   MarkerType,
   Position,
+  Handle,
   useNodesState,
   useEdgesState,
   OnNodesChange,
@@ -19,7 +20,21 @@ import {
   Connection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AlertTriangle, GitBranch, Plus } from "lucide-react";
+import { 
+  AlertTriangle, 
+  GitBranch, 
+  Plus,
+  Play,
+  Square,
+  Type,
+  Hash,
+  Calendar,
+  ChevronDown,
+  CheckSquare,
+  Circle,
+  List,
+  Calculator,
+} from "lucide-react";
 import { validateReachability } from "@/lib/traversal-evaluator";
 import { useBuilderStore } from "@/store/builder-store";
 
@@ -31,45 +46,126 @@ const nodeTypes = {
   step: StepNode,
 };
 
+function getFieldIcon(fieldType: string) {
+  const iconClass = "w-3 h-3";
+  switch (fieldType) {
+    case 'text':
+    case 'textarea':
+      return <Type className={iconClass} />;
+    case 'number':
+      return <Hash className={iconClass} />;
+    case 'date':
+      return <Calendar className={iconClass} />;
+    case 'select':
+      return <ChevronDown className={iconClass} />;
+    case 'checkbox':
+      return <CheckSquare className={iconClass} />;
+    case 'radio':
+      return <Circle className={iconClass} />;
+    case 'bmi':
+      return <Calculator className={iconClass} />;
+    default:
+      return <List className={iconClass} />;
+  }
+}
+
 function StepNode({ data, selected }: { data: any; selected: boolean }) {
   const isUnreachable = data.isUnreachable;
   const hasConditional = data.hasConditional;
+  const isStart = data.isStart;
+  const isEnd = data.isEnd;
+  const fields = data.fields || [];
+  const displayFields = fields.slice(0, 4);
+  const remainingCount = Math.max(0, fields.length - 4);
 
   return (
-    <div
-      className={`px-4 py-3 rounded-lg border-2 shadow-lg min-w-[200px] transition-all cursor-pointer ${
-        isUnreachable
-          ? "border-destructive bg-destructive/10 opacity-60"
-          : selected
-          ? "border-primary bg-primary/10 shadow-xl ring-2 ring-primary/50"
-          : "border-border bg-card hover:border-primary/50 hover:shadow-xl"
-      }`}
-      data-testid={`flow-node-${data.stepId}`}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          {data.groupTitle}
-        </span>
-      </div>
-      <div className="font-semibold text-foreground mb-2">{data.label}</div>
-      <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="outline" className="text-xs">
-          {data.fieldCount} fields
-        </Badge>
-        {hasConditional && (
-          <Badge variant="secondary" className="text-xs gap-1">
-            <GitBranch className="w-3 h-3" />
-            Conditional
-          </Badge>
+    <>
+      {/* Input handle (top) */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background"
+      />
+
+      <div
+        className={`px-4 py-3 rounded-lg border-2 shadow-lg min-w-[240px] max-w-[280px] transition-all cursor-pointer ${
+          isUnreachable
+            ? "border-destructive bg-destructive/10 opacity-60"
+            : selected
+            ? "border-primary bg-primary/10 shadow-xl ring-2 ring-primary/50"
+            : "border-border bg-card hover:border-primary/50 hover:shadow-xl"
+        }`}
+        data-testid={`flow-node-${data.stepId}`}
+      >
+        {/* Header with group and start/end badges */}
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {data.groupTitle}
+          </span>
+          {isStart && (
+            <Badge variant="default" className="text-xs gap-1 bg-green-600 hover:bg-green-700">
+              <Play className="w-3 h-3" />
+              START
+            </Badge>
+          )}
+          {isEnd && (
+            <Badge variant="default" className="text-xs gap-1 bg-red-600 hover:bg-red-700">
+              <Square className="w-3 h-3" />
+              END
+            </Badge>
+          )}
+        </div>
+
+        {/* Step title */}
+        <div className="font-semibold text-foreground mb-2">{data.label}</div>
+
+        {/* Field list preview */}
+        {displayFields.length > 0 && (
+          <div className="mb-2 space-y-1">
+            {displayFields.map((field: any, index: number) => (
+              <div key={index} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="text-primary">{getFieldIcon(field.type)}</span>
+                <span className="truncate">{field.label}</span>
+                {field.validation?.required && (
+                  <span className="text-destructive">*</span>
+                )}
+              </div>
+            ))}
+            {remainingCount > 0 && (
+              <div className="text-xs text-muted-foreground italic pl-5">
+                ...and {remainingCount} more
+              </div>
+            )}
+          </div>
         )}
-        {isUnreachable && (
-          <Badge variant="destructive" className="text-xs gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            Unreachable
+
+        {/* Badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-xs">
+            {data.fieldCount} field{data.fieldCount !== 1 ? 's' : ''}
           </Badge>
-        )}
+          {hasConditional && (
+            <Badge variant="secondary" className="text-xs gap-1">
+              <GitBranch className="w-3 h-3" />
+              Conditional
+            </Badge>
+          )}
+          {isUnreachable && (
+            <Badge variant="destructive" className="text-xs gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              Unreachable
+            </Badge>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Output handle (bottom) */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background"
+      />
+    </>
   );
 }
 
@@ -89,8 +185,13 @@ export default function FlowCanvas({ assessment }: FlowCanvasProps) {
     
     let yOffset = 50;
     const groupSpacing = 300;
-    const stepSpacing = 140;
+    const stepSpacing = 150;
     const xOffset = 100;
+
+    // Determine first step (start) and collect all steps to find end nodes
+    const firstStep = assessment.groups[0]?.steps[0]?.id;
+    const allStepIds = assessment.groups.flatMap(g => g.steps.map(s => s.id));
+    const stepsWithOutgoing = new Set<string>();
 
     // Create nodes for each group and its steps
     assessment.groups.forEach((group, groupIndex) => {
@@ -101,6 +202,18 @@ export default function FlowCanvas({ assessment }: FlowCanvasProps) {
 
         const isUnreachable = unreachableSteps.includes(step.id);
         const hasConditional = (step.traversal && step.traversal.length > 0) || !!step.fallbackNext;
+        const isStart = step.id === firstStep;
+
+        // Check if this step has outgoing edges (not an end node)
+        const hasOutgoing = 
+          (step.traversal && step.traversal.length > 0) || 
+          !!step.fallbackNext ||
+          (stepIndex < group.steps.length - 1) ||
+          (groupIndex < assessment.groups.length - 1);
+
+        if (hasOutgoing) {
+          stepsWithOutgoing.add(step.id);
+        }
 
         nodes.push({
           id: step.id,
@@ -111,11 +224,14 @@ export default function FlowCanvas({ assessment }: FlowCanvasProps) {
             stepId: step.id,
             groupTitle: group.title,
             fieldCount: step.fields.length,
+            fields: step.fields,
             isUnreachable,
             hasConditional,
+            isStart,
+            isEnd: !hasOutgoing,
           },
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left,
+          sourcePosition: Position.Bottom,
+          targetPosition: Position.Top,
         });
 
         // Add traversal edges
@@ -148,11 +264,14 @@ export default function FlowCanvas({ assessment }: FlowCanvasProps) {
                     stepId: 'end',
                     groupTitle: 'System',
                     fieldCount: 0,
+                    fields: [],
                     isUnreachable: false,
                     hasConditional: false,
+                    isStart: false,
+                    isEnd: true,
                   },
-                  sourcePosition: Position.Right,
-                  targetPosition: Position.Left,
+                  sourcePosition: Position.Bottom,
+                  targetPosition: Position.Top,
                 });
               }
               
